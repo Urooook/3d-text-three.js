@@ -25,12 +25,14 @@ const matcapTexture = textureLoader.load('textures/matcaps/8.png')
 
 const objects = []
 
-const fontLoader = new THREE.FontLoader()
+const fontLoader = new THREE.FontLoader();
+
+const texts = [];
 fontLoader.load(
-    'fonts/helvetiker_regular.typeface.json',
+    'fonts/Arial_Regular.json',
     (font) => {
        const textGeometry = new THREE.TextBufferGeometry(
-           'I love my mom', {
+           'Дорогие девушки', {
                font,
                size: 0.5,
                height: 0.2,
@@ -47,7 +49,8 @@ fontLoader.load(
        const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
        //const material = new THREE.MeshNormalMaterial()
        //material.wireframe = true
-       const text = new THREE.Mesh(textGeometry, material)
+       const text = new THREE.Mesh(textGeometry, material);
+        texts.push(text.position);
        scene.add(text)
 
        const donutGeometry = new THREE.TorusBufferGeometry(0.3, 0.2, 20, 45)
@@ -56,7 +59,7 @@ fontLoader.load(
        for(let i = 0; i<150; i++){
          
         const donut = new THREE.Mesh(donutGeometry, material)
-        scene.add(donut)
+        // scene.add(donut)
         objects.push(donut)
         donut.position.x = 1.5 + (Math.random() - 0.5) * 11
         donut.position.y = 1.5 + (Math.random() - 0.5) * 11
@@ -72,7 +75,7 @@ fontLoader.load(
     for(let i = 0; i<150; i++){
          
         const box = new THREE.Mesh(boxGeometry, material)
-        scene.add(box)
+        // scene.add(box)
         objects.push(box)
         box.position.x = 0.5 + (Math.random() - 0.5) * 11
         box.position.y = 0.5 + (Math.random() - 0.5) * 11
@@ -130,13 +133,40 @@ camera.position.y = 35
 camera.position.z = 50
 scene.add(camera)
 
-gsap.to(camera.position, {
-    duration: 2,
-    //delay: 1,
-    x: 1,
-    y: 0,
-    z: 3
-} )
+// gsap.to(camera.position, {
+//     duration: 2,
+//     x: 1,
+//     y: 0,
+//     z: 3
+// } );
+
+function moveCamera(toPosition) {
+    return new Promise(resolve => {
+        gsap.to(camera.position, {
+            x: toPosition.x,
+            y: toPosition.y,
+            z: toPosition.z,
+            duration: 1,
+            onComplete: () => {
+                setTimeout(resolve, 2000); // Задержка 2 секунды
+            }
+        });
+    });
+}
+
+async function animateCamera() {
+    // for await (const text of texts) {
+    //     moveCamera(text);
+    // }
+    // await moveCamera(welcomeText.position);
+    // await moveCamera({x: 1,
+    //     y: 0,
+    //     z: 3});
+    // await moveCamera(cone.position);
+    // Добавляйте сюда дополнительные фигуры по мере необходимости
+}
+
+animateCamera();
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
