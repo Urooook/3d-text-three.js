@@ -27,11 +27,35 @@ const sizes = {
 
 const isMobile = window.innerWidth < 500;
 
-// const dracoLoader = new DRACOLoader()
-// dracoLoader.setDecoderPath('/draco/')
-//
-// const gltfLoader = new GLTFLoader()
-// gltfLoader.setDRACOLoader(dracoLoader)
+const dracoLoader = new DRACOLoader()
+dracoLoader.setDecoderPath('/draco/')
+
+const gltfLoader = new GLTFLoader()
+gltfLoader.setDRACOLoader(dracoLoader);
+
+let loadedGltf = null;
+let mixer = null
+
+const createGltf = (gltf, animationMotion = 11) => {
+    console.log(gltf);
+    mixer = new THREE.AnimationMixer(gltf.scene)
+    const action = mixer.clipAction(gltf.animations[animationMotion])
+    // action.setLoop(THREE.LoopOnce)
+    action.play()
+    gltf.scene.castShadow = true
+    gltf.scene.scale.set(1.5,1.5,1.5)
+    gltf.scene.position.set(430, -20, -0.2)
+    scene.add(gltf.scene)
+}
+
+gltfLoader.load(
+    '/model/Person/model8.glb',
+    (gltf) => {
+        console.log(gltf)
+        loadedGltf = gltf
+        createGltf(gltf, 2)
+    }
+)
 
 
 /**
@@ -75,17 +99,17 @@ const materialNormal = new THREE.MeshNormalMaterial()
 const entity = [
     {text: 'Дорогие девушки', position: new Vector3(0, 0, 20), material: material8},
     {text: `Поздравляем вас
-       с 8 марта!`, position: new Vector3(50, 10, 0), material: materialNormal, delay: 200},
+       с 8 марта!`, position: new Vector3(50, 10, 0), material: materialNormal, delay: 2000},
     {text: `Если бы успех компании измерялся в цветах,
-     вы были бы целым весенним садом`, position: new Vector3(130, 0, 0), material: material5, isBig: true, delay: 3500},
+     вы были бы целым весенним садом`, position: new Vector3(130, 0, 0), material: material5, isBig: true, delay: 5000},
     {text: `Наши розочки-разработчики:
-     Вика, Элина, Валентина`, position: new Vector3(230, 20, 0), material: material8, delay: 3000},
+     Вика, Элина, Валентина`, position: new Vector3(230, 20, 0), material: material8, delay: 5000},
     {text: `Наши тюльпанчики-руководители:
-     Надежда, Юлия`, position: new Vector3(330, -40, -0), material: material4, delay: 3000, isBig: true},
+     Надежда, Юлия`, position: new Vector3(330, -40, -0), material: material4, delay: 5000, isBig: true},
     {text: `Наш пиончик-тестировщик:
-     Алина`, position: new Vector3(430, 20, -30), material: material5, delay: 2500},
+     Алина`, position: new Vector3(430, 20, -30), material: material5, delay: 4000},
     {text: `Наши лилии-аналитики:
-     Альбина, Даша, Валерия, Ирина, Юлия`, position: new Vector3(230, -40, -0), material: material8, delay: 3000, isBig: true},
+     Альбина, Даша, Валерия, Ирина, Юлия`, position: new Vector3(230, -40, -0), material: material8, delay: 5000, isBig: true},
     {text: 'Еще раз поздравляем !!!', position: new Vector3(430, -20, 0), material: material8,},
 ]
 
@@ -200,6 +224,35 @@ async function animateCamera() {
 
 )
 
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8)
+scene.add(ambientLight)
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+directionalLight.castShadow = true
+directionalLight.shadow.mapSize.set(1024, 1024)
+directionalLight.shadow.camera.far = 15
+directionalLight.shadow.camera.left = - 7
+directionalLight.shadow.camera.top = 7
+directionalLight.shadow.camera.right = 7
+directionalLight.shadow.camera.bottom = - 7
+directionalLight.position.set(5, 5, 5)
+scene.add(directionalLight)
+
+// const pointLight = new THREE.PointLight(0xffffff, 0.8)
+// pointLight.castShadow = true
+// pointLight.position.set(3,3,3)
+// scene.add(pointLight)
+
+const pointLight = new THREE.PointLight( 0xffffff, 0.8, 100 );
+pointLight.position.set( -1.4, 4.4, 2.8 );
+scene.add( pointLight );
+
+const pointLight1 = new THREE.PointLight( 0xffffff, 1, 100 );
+pointLight1.position.set( -4.3, 8.7, 2.8 );
+scene.add( pointLight1 );
+
+
+
 /**
  * Object
  */
@@ -261,10 +314,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  * Animate
  */
 const clock = new THREE.Clock()
+let previousTime = 0
 
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+    const deltaTime = elapsedTime - previousTime
+    previousTime = elapsedTime
 
     for(let i =0; i<objects.length; i++){
         objects[i].rotation.x += 0.005
@@ -276,6 +332,7 @@ const tick = () =>
 
     controls.update()
     // camera.updateProjectionMatrix()
+    mixer && mixer.update(deltaTime)
 
 
     // Render
