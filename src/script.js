@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import gsap from 'gsap'
+import {Vector3} from "three";
+import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
 
 /**
  * Base
@@ -15,55 +18,120 @@ gui.hide()
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
-const scene = new THREE.Scene()
+const scene = new THREE.Scene();
+
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+const isMobile = window.innerWidth < 500;
+
+// const dracoLoader = new DRACOLoader()
+// dracoLoader.setDecoderPath('/draco/')
+//
+// const gltfLoader = new GLTFLoader()
+// gltfLoader.setDRACOLoader(dracoLoader)
+
 
 /**
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
-const matcapTexture = textureLoader.load('textures/matcaps/8.png')
+const matcapTexture8 = textureLoader.load('textures/matcaps/8.png')
+const matcapTexture7 = textureLoader.load('textures/matcaps/7.png')
+const matcapTexture6 = textureLoader.load('textures/matcaps/6.png')
+const matcapTexture5 = textureLoader.load('textures/matcaps/5.png')
+const matcapTexture4 = textureLoader.load('textures/matcaps/4.png')
+const matcapTexture3 = textureLoader.load('textures/matcaps/3.png')
+const matcapTexture2 = textureLoader.load('textures/matcaps/2.png')
+const matcapTexture1 = textureLoader.load('textures/matcaps/1.png')
 
-const objects = []
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+
+camera.position.x = -15
+camera.position.y = 35
+camera.position.z = 50
+
+camera.up.set(0, 1, 0)
+
+scene.add(camera)
+
+const objects = [];
 
 const fontLoader = new THREE.FontLoader();
 
+const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture8})
+const material8 = new THREE.MeshMatcapMaterial({matcap: matcapTexture8})
+const material7 = new THREE.MeshMatcapMaterial({matcap: matcapTexture7})
+const material6 = new THREE.MeshMatcapMaterial({matcap: matcapTexture6})
+const material5 = new THREE.MeshMatcapMaterial({matcap: matcapTexture5})
+const material4 = new THREE.MeshMatcapMaterial({matcap: matcapTexture4})
+const material3 = new THREE.MeshMatcapMaterial({matcap: matcapTexture3})
+const material2 = new THREE.MeshMatcapMaterial({matcap: matcapTexture2})
+const material1 = new THREE.MeshMatcapMaterial({matcap: matcapTexture1})
+const materialNormal = new THREE.MeshNormalMaterial()
+
+const entity = [
+    {text: 'Дорогие девушки', position: new Vector3(0, 0, 20), material: material8},
+    {text: `Поздравляем вас
+       с 8 марта!`, position: new Vector3(50, 10, 0), material: materialNormal, delay: 200},
+    {text: `Если бы успех компании измерялся в цветах,
+     вы были бы целым весенним садом`, position: new Vector3(130, 0, 0), material: material5, isBig: true, delay: 3500},
+    {text: `Наши розочки-разработчики:
+     Вика, Элина, Валентина`, position: new Vector3(230, 20, 0), material: material8, delay: 3000},
+    {text: `Наши тюльпанчики-руководители:
+     Надежда, Юлия`, position: new Vector3(330, -40, -0), material: material4, delay: 3000, isBig: true},
+    {text: `Наш пиончик-тестировщик:
+     Алина`, position: new Vector3(430, 20, -30), material: material5, delay: 2500},
+    {text: `Наши лилии-аналитики:
+     Альбина, Даша, Валерия, Ирина, Юлия`, position: new Vector3(230, -40, -0), material: material8, delay: 3000, isBig: true},
+    {text: 'Еще раз поздравляем !!!', position: new Vector3(430, -20, 0), material: material8,},
+]
+
+const getTextGeometry = (text, font) => {
+    const textGeometry = new THREE.TextBufferGeometry(
+        text, {
+            font,
+            size: 0.5,
+            height: 0.2,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.03,
+            bevelSize: 0.02,
+            bevelOffset: 0,
+            bevelSegments: 5,
+        }
+    )
+    textGeometry.center();
+    return textGeometry;
+}
+
 const texts = [];
+
+
 fontLoader.load(
     'fonts/Arial_Regular.json',
     (font) => {
-       const textGeometry = new THREE.TextBufferGeometry(
-           'Дорогие девушки', {
-               font,
-               size: 0.5,
-               height: 0.2,
-               curveSegments: 12,
-               bevelEnabled: true,
-               bevelThickness: 0.03,
-               bevelSize: 0.02,
-               bevelOffset: 0,
-               bevelSegments: 5
-           }
-       )
-       textGeometry.center()
-
-       const material = new THREE.MeshMatcapMaterial({matcap: matcapTexture})
-       //const material = new THREE.MeshNormalMaterial()
-       //material.wireframe = true
-       const text = new THREE.Mesh(textGeometry, material);
-        texts.push(text.position);
-       scene.add(text)
+        entity.forEach(({ position, text, material, isBig = false, delay = 1000 }) => {
+           const  textGeometry = getTextGeometry(text, font);
+           const mesh = new THREE.Mesh(textGeometry, material);
+            mesh.position.set(position.x, position.y, position.z);
+            texts.push({toPosition: mesh.position, isBig, delay});
+            scene.add(mesh)
+        });
 
        const donutGeometry = new THREE.TorusBufferGeometry(0.3, 0.2, 20, 45)
        const boxGeometry = new THREE.BoxBufferGeometry(0.5, 0.5, 0.5)
 
        for(let i = 0; i<150; i++){
-         
-        const donut = new THREE.Mesh(donutGeometry, material)
-        // scene.add(donut)
+
+        const donut = new THREE.Mesh(donutGeometry, materialNormal)
+        scene.add(donut)
         objects.push(donut)
-        donut.position.x = 1.5 + (Math.random() - 0.5) * 11
-        donut.position.y = 1.5 + (Math.random() - 0.5) * 11
-        donut.position.z = 1.5 + (Math.random() - 0.5) * 11
+        donut.position.x = 430 + (Math.random() - 0.5) * 11
+        donut.position.y = -20 + (Math.random() - 0.5) * 11
+        donut.position.z = 0 - (Math.random() + 0.1) * 11
 
         donut.rotation.x = Math.random() * Math.PI
         donut.rotation.y = Math.random() * Math.PI
@@ -73,13 +141,13 @@ fontLoader.load(
     }
 
     for(let i = 0; i<150; i++){
-         
-        const box = new THREE.Mesh(boxGeometry, material)
-        // scene.add(box)
+
+        const box = new THREE.Mesh(boxGeometry, materialNormal)
+        scene.add(box)
         objects.push(box)
-        box.position.x = 0.5 + (Math.random() - 0.5) * 11
-        box.position.y = 0.5 + (Math.random() - 0.5) * 11
-        box.position.z = 0.5 + (Math.random() - 0.5) * 11
+        box.position.x = 430 + (Math.random() - 0.5) * 11
+        box.position.y = -20 + (Math.random() - 0.5) * 11
+        box.position.z = 0 - (Math.random() + 0.1) * 11
 
         box.rotation.x = Math.random() * Math.PI
         box.rotation.y = Math.random() * Math.PI
@@ -87,7 +155,49 @@ fontLoader.load(
         const scale = Math.random()
         box.scale.set(scale, scale, scale)
     }
+let isFirst = true;
+    const isMobileQ = isMobile ? 3 : 1
+function moveCamera({toPosition, isBig, delay}) {
+    return new Promise(resolve => {
+        const additionalX = 0;
+        const additionalY = isBig ? 2 : 1;
+        const additionalZ = isBig ? 8 : 5;
+
+        gsap.to(camera.position, {
+            x: toPosition.x + additionalX * isMobileQ,
+            y: toPosition.y + (additionalY - 1)  * isMobileQ,
+            z: toPosition.z  + additionalZ * isMobileQ,
+            duration: 1,
+            onComplete: () => {
+                if(isFirst) {
+                    isFirst = false;
+                }
+                setTimeout(resolve, delay); // Задержка 2 секунды
+            },
+            onUpdate: () => {
+                if(!isFirst) {
+                    controls.target.copy(camera.position);
+                    controls.update()
+                }
+                camera.lookAt(toPosition);
+            }
+        });
+    });
+}
+
+
+async function animateCamera() {
+    for await (const text of texts) {
+        await moveCamera(text);
     }
+    // controls.target.copy(camera.position);
+    // controls.update()
+    controls.target.copy(new Vector3(430, -20, 0));
+}
+
+    animateCamera();
+    }
+
 )
 
 /**
@@ -103,10 +213,6 @@ fontLoader.load(
 /**
  * Sizes
  */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
 
 window.addEventListener('resize', () =>
 {
@@ -127,11 +233,7 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = -15
-camera.position.y = 35
-camera.position.z = 50
-scene.add(camera)
+
 
 // gsap.to(camera.position, {
 //     duration: 2,
@@ -140,37 +242,11 @@ scene.add(camera)
 //     z: 3
 // } );
 
-function moveCamera(toPosition) {
-    return new Promise(resolve => {
-        gsap.to(camera.position, {
-            x: toPosition.x,
-            y: toPosition.y,
-            z: toPosition.z,
-            duration: 1,
-            onComplete: () => {
-                setTimeout(resolve, 2000); // Задержка 2 секунды
-            }
-        });
-    });
-}
 
-async function animateCamera() {
-    // for await (const text of texts) {
-    //     moveCamera(text);
-    // }
-    // await moveCamera(welcomeText.position);
-    // await moveCamera({x: 1,
-    //     y: 0,
-    //     z: 3});
-    // await moveCamera(cone.position);
-    // Добавляйте сюда дополнительные фигуры по мере необходимости
-}
 
-animateCamera();
-
-// Controls
+// // Controls
 const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
+controls.enableDamping = false
 
 /**
  * Renderer
@@ -196,7 +272,11 @@ const tick = () =>
         objects[i].rotation.z += 0.005
     }
     // Update controls
+    // controls.target.copy(camera.position);
+
     controls.update()
+    // camera.updateProjectionMatrix()
+
 
     // Render
     renderer.render(scene, camera)
