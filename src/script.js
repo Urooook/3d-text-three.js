@@ -49,7 +49,7 @@ const createGltf = (gltf, animationMotion = 11) => {
 }
 
 gltfLoader.load(
-    '/model/Person/model8.glb',
+    '/models/Person/model8.glb',
     (gltf) => {
         console.log(gltf)
         loadedGltf = gltf
